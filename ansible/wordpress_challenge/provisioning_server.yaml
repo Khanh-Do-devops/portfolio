@@ -1,0 +1,157 @@
+---
+
+- name: Provisioning server
+  hosts: ubuntu_WP
+  become: yes
+  tasks:
+    - name: Install LAMP stack
+      apt:
+        name: "{{item}}"
+        state: present
+        update_cache: yes  
+      loop:   
+        - apache2
+        - python3 
+        - mysql-server
+        - php 
+        - libapache2-mod-php
+        - php-mysql
+        - python3-pip
+        - ufw
+        - php-curl
+        - php-gd 
+        - php-mbstring
+        - php-xml
+        - php-xmlrpc
+        - php-soap
+        - php-intl
+        - php-zip  
+        - ghostscript 
+        - php-bcmath 
+        - php-imagick 
+        - php-json 
+
+    - name: Reload apache2
+      service:
+        name: apache2
+        state: reloaded
+
+    - name: Allow all access SSH
+      ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+
+    - name: Allow all access to MySQL
+      ufw:
+        rule: allow
+        port: '3306'
+        proto: tcp
+
+    - name: Allow all access to TCP
+      ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+        state: enabled  
+    
+    - name: Start MySQL
+      service:
+        name: mysql
+        state: started
+
+    - name: Install PyMySQL
+      pip:
+        name: PyMySQL
+        state: present
+
+    - name: copy .my.cnf file with root password credentials
+      template:
+        src: ./templates/my.cnf.j2 
+        dest: /root/.my.cnf 
+        owner: root 
+        mode: '0600'
+
+    - name: Change root password
+      shell: mysql -u root -e 'ALTER USER "root"@"localhost" IDENTIFIED WITH mysql_native_password BY "{{ mysql_root_password }}"';
+   
+    - name: Removes anonymous user account for localhost
+      mysql_user:
+        name: ''
+        host: 'localhost'
+        state: absent
+
+    - name: removes test database
+      mysql_db:
+        name: 'test'
+        state: absent
+
+    - name: Create a new database with name 'wordpress_db'
+      mysql_db:
+        name: wordpress_db
+        state: present
+
+    - name: Create database user with name 'khanh' and password '' with all database privileges
+      mysql_user:
+        name: khanh
+        password: "{{db_user_passwd}}"
+        priv: '*.*:ALL'
+        state: present
+
+    - name: Flush Privileges
+      shell: mysql -u root -e 'FLUSH PRIVILEGES'
+
+    - name: Create /srv/www/ directory
+      file:
+        path: /srv/www
+        state: directory
+        owner: www-data
+        group: www-data	
+        mode: '0755'
+
+    - name: Unarchive a file that needs to be downloaded (added in 2.0)
+      unarchive:
+        src: https://wordpress.org/latest 
+        dest: /srv/www/
+        remote_src: yes
+        owner: www-data
+        group: www-data  
+
+    - name: copy wordpress php file
+      template:
+        src: ./templates/wp-config.php.j2
+        dest: /srv/www/wordpress/wp-config.php
+        owner: www-data
+        group: www-data  
+        mode: '0644'
+
+    - name: copy wordpress config file to site-available
+      template:
+        src: ./templates/wordpress.conf.j2
+        dest: /etc/apache2/sites-available/wordpress.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: copy wordpress config file to site-enable
+      template:
+        src: ./templates/wordpress.conf.j2
+        dest: /etc/apache2/sites-enabled/wordpress.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Remove default page symlink
+      file:
+        path: /etc/apache2/sites-enabled/000-default.conf
+        state: absent
+
+    - apache2_module:
+        state: present
+        name: rewrite
+        force: True
+    
+    - name: Reload apache2
+      service:
+        name: apache2
+        state: reloaded
