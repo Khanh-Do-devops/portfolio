@@ -14,7 +14,9 @@ provider "aws" {
 
 # Create a VPC
 resource "aws_vpc" "vprofile_vpc" {
+  enable_dns_hostnames = true
   cidr_block = "10.0.0.0/16"
+
 }
 
 # Creating 2 subnet. 1 in us-east 1a, and 1 in us-east-1b
