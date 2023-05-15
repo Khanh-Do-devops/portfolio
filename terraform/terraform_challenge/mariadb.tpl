@@ -1,5 +1,5 @@
 #!/bin/bash
-DATABASE_PASS='admin123'
+DATABASE_PASS='${secret}'
 sudo yum update -y
 sudo yum install epel-release -y
 sudo yum install git zip unzip -y
@@ -26,6 +26,3 @@ sudo mysql -u root -p"$DATABASE_PASS" -e "FLUSH PRIVILEGES"
 
 # Restart mariadb-server
 sudo systemctl restart mariadb
-
-
-
