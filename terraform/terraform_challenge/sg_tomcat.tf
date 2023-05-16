@@ -20,7 +20,7 @@ resource "aws_vpc_security_group_ingress_rule" "tcp_80_to_tomcat_alb" {
   ip_protocol = "tcp"
   to_port     = 80
   description = "tcp_80_to_tomcat_alb"
-  
+
 }
 
 resource "aws_vpc_security_group_egress_rule" "tcp_80_tomcat_egress" {

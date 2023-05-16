@@ -17,13 +17,12 @@ resource "aws_launch_template" "tomcat-LT" {
     }
   }
 
-
   placement {
     availability_zone = "us-east-1a"
   }
 
   network_interfaces {
-    associate_public_ip_address = true
+    associate_public_ip_address = false
     security_groups             = [aws_security_group.tomcat_sg.id]
   }
 
@@ -45,7 +44,7 @@ resource "aws_autoscaling_policy" "asg_policy" {
 
 resource "aws_autoscaling_group" "tomcat-asg" {
   name                = "tomcat-asg"
-  vpc_zone_identifier = [aws_subnet.us_east_1a_public.id, aws_subnet.us_east_1b_public.id]
+  vpc_zone_identifier = [aws_subnet.us_east_1a_private.id, aws_subnet.us_east_1b_private.id]
   desired_capacity    = 2
   max_size            = 3
   min_size            = 1
