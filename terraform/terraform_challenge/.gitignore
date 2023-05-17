@@ -1,0 +1,4 @@
+terraform-key.pub
+.terraform/*
+*.tfstate
+*.tfstate*
